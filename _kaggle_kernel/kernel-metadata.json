@@ -1,0 +1,17 @@
+{
+ "id": "yuanyezhiyin2/failure-as-signal-entry",
+ "title": "failure-as-signal-entry",
+ "code_file": "kaggle_notebook.py",
+ "language": "python",
+ "kernel_type": "script",
+ "is_private": true,
+ "enable_gpu": false,
+ "enable_internet": false,
+ "dataset_sources": [
+  "yuanyezhiyin2/failure-as-signal-code"
+ ],
+ "competition_sources": [
+  "arc-prize-2026-arc-agi-2"
+ ],
+ "kernel_sources": []
+}
