@@ -1,0 +1,100 @@
+We evaluate on the public ARC-AGI-2 evaluation set (120 tasks; pass@2 exact match), report cost (which only
+a small minority of papers do~\cite{survey2026arc}), and never fit to test outputs. One disclosure is owed
+(\S\ref{sec:method}): the axis-searching symmetry-repair operator was generalized after inspecting the
+training pairs of evaluation task \texttt{0934a4d8}, so the entry's $0.83\%$ is not a clean-room figure---the
+frozen, pre-inspection library scores $0/120$. We report both numbers and treat only capabilities derived from
+\emph{training}-set diagnosis as clean going forward. \textbf{Our working
+leaderboard entry is the purely symbolic solver} (MDL compositional search $+$ the conservative anytime
+policy): it is knowledge-free in the literal sense---no ARC pretraining, no neural network---runs offline on
+CPU, and produces a format-valid \texttt{submission.json} for all 120 tasks.
+
+\paragraph{Accuracy, reported without embellishment.} Table~\ref{tab:arc} gives the progression. The
+single-step transform bank scores $0\%$ on evaluation ($1.6\%$ on training); the full generic library lifts
+training only to $3.0\%$, and its sole evaluation solve is the axis-searching symmetry-repair operator that
+the gap-closure loop built. The symbolic entry solves \textbf{1 of 120} evaluation tasks: $0.83\%$ task-level
+pass@2, or $0.60\%$ over the $167$ test outputs. We state plainly that on consumer hardware, knowledge-free ARC-AGI-2
+accuracy is well under one percent; the leaderboard---topped near $24\%$ by entries using clusters of H100s
+and hundreds of thousands of synthetic puzzles~\cite{arcprize2025techreport}---is not the right objective for
+a single-GPU paper-track entry. The competition rules concur that ``the code submission need not achieve a
+high score''; accuracy is one of six equally-weighted criteria, and prior paper awards went to entries at
+$8\%$ on ARC-AGI-2 and below~\cite{jolicoeur2025trm,liao2025compressarc}. Our contribution is the mechanism,
+theory, generality, and roadmap.
+
+\begin{table}[t]\centering
+\caption{ARC-AGI-2 (120-task public eval, pass@2). Knowledge-free, single consumer machine. The symbolic
+entry is CPU-only; speed is full-set wall-clock. We also list a transformer fallback we explored
+(\S\ref{sec:limitations}); it did not exceed the symbolic entry within our training budget, so it is not part
+of the submitted entry.}
+\label{tab:arc}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccl}
+\toprule
+method & eval pass@2 & train pass@2 & speed & note \\
+\midrule
+all single-step transforms & 0.0\% & 1.6\% & 0.2 ms/task & every common global op \\
+generic library (27), 1 primitive & 0.83\% & 3.0\% & 8.5 s/set & eval solve $=$ symmetry-repair \\
+MDL composition (depth $\le 3$) & 0.83\% & --- & 4.2 min/set & adds no eval solve \\
+\textbf{symbolic entry} (full) & \textbf{0.83\%} & --- & 4.3 min/set & \textbf{submitted, offline} \\
+\midrule
+\emph{transformer fallback (explored)} & $0.0\%$ (0/120) & $0.0\%$ (0/60) & $\sim$3.8 s/task & \emph{not submitted; see \S\ref{sec:limitations}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Graceful degradation (C2).} Beyond exact match, the solver's failures are informative. The
+conservative anytime policy matches-or-beats copy-input on $97.6\%$ of failed evaluation \emph{outputs}
+($162/166$; on the remaining $4$ it does worse---the train-side guarantee does not bind held-out
+outputs)---while committing a non-trivial transformation on $28/120$ ($23\%$) of \emph{tasks}, exactly those
+where the training evidence supports it. The structural informativeness of predictions is measured on the
+\emph{unconstrained} lowest-DL predictor: it commits the correct output shape $67.7\%$ of the time, with
+$83.6\%$ cell fidelity conditioned on correct shape. We propose the
+partial-credit metric of Def.~\ref{def:partial} so that this sub-pass@2 progress---invisible to the binary
+leaderboard metric---is measurable and comparable across solvers.
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.7\linewidth]{figs/fig_gapclosure.pdf}
+\caption{The gap-closure loop on ARC-AGI-2 \emph{training} tasks, run for three iterations. Iteration 1: where
+the diagnostic names a family with a single directly-realizing knowledge-free primitive, adding it closes
+$75$--$100\%$ (panel-logic, needing composition, $33\%$); object counting, the largest unclosed family, is
+flagged. Iterations 2--3 build the flagged capability: $4/31$ close, $8$ further unflagged tasks are solved by
+the new selection-by-cardinality rules, and the residuals of the rest reveal that counting in ARC-AGI-2 is
+itself compositional.}
+\label{fig:gapclosure}
+\end{figure}
+
+\paragraph{The gap-closure loop (C3, Progress), run for two iterations.} On the ARC-AGI-2 \emph{training} set
+the diagnostic names a family for $5.4\%$ of tasks. \emph{Iteration 1:} where the named family has a single
+directly-realizing knowledge-free primitive, adding it closes $75$--$100\%$ of those tasks (recolor $4/5$,
+symmetry $4/5$, deduplication $4/4$, scaling $3/4$, periodicity $1/1$); the one family requiring
+\emph{composition}, panel-logic, closes $1/3$ ($33\%$). The largest unclosed family was object counting
+($31$ training tasks, $0\%$)---the diagnostic's own flag for what to build next. \emph{Iteration 2:} we built
+that flagged capability---three generic cardinality families (count$\to$sized-grid, select-object-by-count,
+and a per-task \emph{learned} count$\to$color map)---which closes $3/31$ ($10\%$) of the diagnosed family and,
+because selection-by-cardinality is broadly useful, solves $8$ additional training tasks the detector had not
+flagged ($11$ total). Bookkeeping, to be precise: the loop's \emph{diagnosed-family} closure union rises from
+$17$ to $20/1000$ ($4{+}4{+}4{+}3{+}1{+}1$ from iteration~1 plus the $3$ in-family counting closures); the $8$
+unflagged solves sit outside that union (Fig.~\ref{fig:gapclosure}). The instructive
+part is \emph{why} closure is only $10\%$: inspection of the residuals shows the ``counting'' family is
+internally compositional---ranked bar charts, paired count-encodings, classifications---so no flat counting
+basis can span it. \emph{Iterations 3--4 (clean-room):} acting on training residuals only, we added a ranked-histogram counting
+family (motivated by training task \texttt{2753e76c}, which it solves), panel decomposition with
+odd-one-out/majority selection, exact-fit factory precedence in the entry, and---the largest addition---an
+\emph{object-property-map} family that learns, per task, a mapping from a generic object property (size, size
+rank, canonical shape, border contact, hole count, color) to an action (recolor/delete), verified on all
+training pairs; it alone solves $9$ training tasks (including the classic rank-recoloring family of
+\texttt{08ed6ac7}). Training-side closure rose again (object counting $4/31$; diagnosed-family union
+$21/1000$; $+9$ object-map solves)---and then we took two \emph{pre-registered} evaluation runs, one after
+each iteration: the score did not move either time ($0.83\%$, unchanged). We report these adverse results
+deliberately: \textbf{three consecutive iterations of directed, diagnostic-guided capability building lift
+training coverage monotonically yet leave evaluation at exactly $1/120$.} Evaluation tasks are not
+``training families, slightly harder''---they are structurally novel compositions, which is the cleanest
+evidence in this paper that the cliff concerns compositional \emph{depth} and abstraction discovery, not
+breadth of primitives or families. The loop is thus a measured, interpretable mechanism for directed
+progress---every capability added is named, human-auditable, and its transfer (or failure to transfer) is
+observable---rather than a demonstrated path to $85\%$ on evaluation.
+
+\paragraph{Cost and reproducibility.} The submitted symbolic entry is CPU-only and processes the 120-task set
+in $\sim$4.3 minutes ($2.2$\,s/task)---orders of magnitude cheaper than frontier systems reporting
+\$$30$--$60$/task \cite{arcprize2025techreport}. We release all code, the exact offline submission script, and the format-valid
+\texttt{submission.json}; every number above traces to the experiment log in the repository.

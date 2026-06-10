@@ -1,0 +1,165 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{enumitem}
+\usepackage{microtype}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+
+\title{\textbf{Failure as Signal: Knowledge-Free Compositional Reasoning\\ that Maps the Path to ARC-AGI}}
+\author{Si Fan}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+On ARC-AGI-2, every published method falls off a \emph{compositional cliff}: scores of 70--80\% on
+ARC-AGI-1 collapse to 20--30\%, with no paradigm immune. We argue the bottleneck is not only that solvers
+fail, but that they fail \emph{uninformatively}---producing a wrong grid and no account of what is missing.
+We reframe the problem: a solver should treat \textbf{failure as signal}. We present a knowledge-free
+(no pretraining on ARC, no neural network in the submitted entry) solver that searches a typed, compositional
+hypothesis space under a hierarchical Minimum-Description-Length (MDL) objective, and on every task returns
+(i) its best \emph{partial} solution and (ii) a \emph{typed diagnosis of the missing abstraction}. Our
+formalization is simple and constructive: under a two-part MDL code, the \emph{incompressible residual} of the
+best program localizes the gap and certifies that re-adding the missing primitives drives the residual to
+zero---with a strictly positive description-length drop under an explicit condition, and a \emph{single}
+named primitive sufficing in the singleton-gap regime our experiments instantiate
+(Theorem~\ref{thm:residual}).
+We turn this into a measurable \emph{gap-closure loop}---diagnose the residual, name the missing primitive,
+add it, re-search---and run it for two iterations on ARC-AGI-2, where it acts on its own diagnosis. We probe
+the framework on two non-ARC domains: on an authored sequence domain it recovers exact programs for $92\%$ of
+$400$ tasks and re-adding the diagnosed primitive closes $100\%$ of provably-needy ablations (a
+realizable-regime consistency check), while naming from the residual signature alone succeeds an honest
+$62\%$; on the \emph{externally-defined} space of all $256$ elementary cellular automata, the search exactly
+recovers the library-expressible (affine/shift) family, degrades gracefully on the chaotic remainder ($0.84$
+vs $0.50$ copy-input cell accuracy), and residual size predicts single-primitive closability with
+$\mathrm{AUC}=0.76$. We also contribute a \emph{frontier map}: an unsupervised
+clustering of the $\sim$96\% of ARC-AGI-2 \emph{evaluation} tasks that no single-family detector can name,
+into seven structural meta-families that prioritize what the field should build next. We are candid that the
+submitted entry's accuracy on a single consumer machine is well under one percent; we argue---and the rubric
+agrees (``the code submission need not achieve a high score'')---that a paper-track entry's value lies in
+mechanism, theory, generality, and progress, not in out-scaling industrial compute. All code and the
+format-valid offline submission are open-source.
+\end{abstract}
+
+\section{Introduction}
+The Abstraction and Reasoning Corpus (ARC-AGI)~\cite{chollet2019measure} measures \emph{fluid} intelligence:
+each task gives a handful of input--output grid pairs and asks for the rule, which must then be applied to a
+held-out input. ARC-AGI-2~\cite{chollet2025arc2} is deliberately harder than its predecessor, and the 2025
+competition exposed a stark, universal pattern: the \emph{compositional cliff}. Systems that reach 70--80\% on
+ARC-AGI-1 drop to 20--30\% on ARC-AGI-2, and the drop is \emph{paradigm-independent}---program synthesis,
+test-time training, and tiny neural networks all fall together~\cite{survey2026arc,arcprize2025techreport}.
+The living survey of the field states the diagnosis plainly: ``no current architecture implements explicit
+mechanisms for hierarchical reasoning,'' and current systems exhibit ``catastrophic failure'' where humans
+``degrade gracefully,'' producing partial solutions and systematic errors that reveal their reasoning.
+
+We take that last observation as our starting point. The problem is not merely that solvers fail; it is that
+they fail \emph{without information}. A human who cannot fully solve a task still produces a best partial
+answer and can often say \emph{what kind} of operation they are missing. Current ARC systems produce a single
+wrong grid and nothing else. We therefore ask: \textbf{can a solver be built so that its failures are
+informative---so that it returns a best partial solution and a diagnosis of the abstraction it lacks---and can
+those diagnoses be turned into a principled path toward higher accuracy?}
+
+Our answer is built around three coupled ideas, unified by a single MDL objective:
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Knowledge-free compositional search (C1).} We induce programs per task, with no ARC
+  pretraining and no neural network, over a small library of \emph{generic} (domain-agnostic) primitives,
+  scored by a hierarchical MDL prior under which reuse shortens the code---so compression pressure prefers
+  compositional explanations. This is the structural capability a flat per-pixel decoder
+  (e.g.\ CompressARC~\cite{liao2025compressarc}) lacks.
+  \item \textbf{Graceful degradation (C2).} When no program explains all examples exactly, we emit the best
+  partial program's prediction under a conservative anytime policy that never does worse than ``leave the grid
+  alone,'' and we measure it with a \emph{partial-credit} metric the field currently lacks.
+  \item \textbf{Residual diagnostics (C3).} We define the \emph{missing primitive} via the incompressible
+  residual of the best program, and show (Theorem~\ref{thm:residual}) that this residual provably localizes
+  the gap and that re-adding the missing primitives closes it (a single one in the singleton-gap regime).
+  Diagnosing the residual yields a typed name;
+  naming is empirically partial (62\%), which we report rather than hide.
+\end{enumerate}
+
+\noindent\textbf{Contributions.}
+\begin{itemize}[leftmargin=1.4em,itemsep=1pt]
+  \item A reframing of ARC progress around \emph{failure as signal}, and a knowledge-free solver that
+  instantiates it (\S\ref{sec:method}).
+  \item A constructive MDL formalization: the incompressible residual localizes the gap and is a sufficient
+  statistic for closing it (\S\ref{sec:theory}), with a measurable \emph{gap-closure loop}.
+  \item Generality on \emph{two} non-ARC domains (\S\ref{sec:generality}): an authored sequence domain ($92\%$
+  exact; ablation closure $100\%$, naming $62\%$) and the externally-defined space of all $256$ elementary
+  cellular automata, where the search recovers exactly the library-expressible family, degrades gracefully in
+  the \emph{non-realizable} regime ($+0.34$ cell-accuracy over copy-input), and residual size predicts
+  single-primitive closability ($\mathrm{AUC}=0.76$).
+  \item A \emph{frontier map}: unsupervised clustering of the $\sim$96\% of ARC-AGI-2 evaluation tasks that no
+  single-family detector can name, into seven structural meta-families that prioritize what to build next
+  (\S\ref{sec:frontier}).
+  \item Honest, fully-reported ARC-AGI-2 measurements (including cost), and an open-source, format-valid,
+  offline working entry.
+\end{itemize}
+
+\section{Related Work}\label{sec:related}
+Program induction over a domain-specific language is the classic ARC paradigm; pure search caps near $40\%$ on
+ARC-AGI-1 and far lower on ARC-AGI-2 due to combinatorial explosion. Description-length objectives for ARC
+appear in neurally-guided induction~\cite{ouellette2024neurally}, and \emph{cross-task library learning}---
+DreamCoder~\cite{ellis2021dreamcoder} and its wake--sleep abstraction growth---learns reusable primitives over
+a task \emph{distribution}. CompressARC~\cite{liao2025compressarc} performs knowledge-free MDL compression but
+with a \emph{flat}, non-compositional decoder; TRM~\cite{jolicoeur2025trm} and SOAR~\cite{pourcel2025soar}
+reach higher accuracy via ARC-trained recursion and LLM-driven evolutionary synthesis (both knowledge-bound);
+vector-symbolic~\cite{vsa2025arc} and transformer-diagnostic~\cite{affinity2025compgap} work approach
+abstraction and the ``compositional gap'' from other angles. We differ in three specific ways: (i) our
+diagnostic is a \emph{per-task, knowledge-free} read of the MDL residual---not a learned cross-task library
+(DreamCoder) nor an architecture-level diagnosis; (ii) we make the failure \emph{output} informative via a
+graceful partial-credit policy; and (iii) we organize the unsolved majority into a released frontier map. Our
+gap-closure loop resembles wake--sleep library growth, but each added capability is \emph{named by the
+residual} and human-auditable, rather than discovered by opaque search.
+
+\section{The Compositional Cliff, Measured}\label{sec:cliff}
+Before proposing a method we quantify the cliff with knowledge-free baselines on the public ARC-AGI-2
+evaluation set (120 tasks). A bank of \emph{every} common single-step transform (the eight dihedral
+geometries, color permutation, tiling, scaling, crop-to-content, constant output), each verified to reproduce
+all training pairs, solves \textbf{0/120} evaluation tasks (and $1.6\%$ of the 1000 training tasks). Our full
+generic library of $27$ operations, applied as a single primitive, solves just \textbf{1/120} on evaluation
+($3.0\%$ of training)---and that single solve exists only because the gap-closure loop of \S\ref{sec:method}
+later built the axis-searching symmetry-repair operator. An anytime MDL search composing the primitives to
+depth three adds \emph{nothing} beyond single primitives on evaluation: it finds exact training-fits on
+exactly $2/120$ tasks, both with programs of length one. Finally, a battery of ten
+structural detectors (symmetry, periodicity, recolor, panel logic, object-count, \dots) \emph{names} the
+required abstraction for only \textbf{3.3\%} of evaluation tasks; \textbf{96.7\%} are ``unknown.'' These are not
+bugs: they are the result. ARC-AGI-2 is, by construction, \emph{irreducibly compositional}---beyond any single
+generic family and beyond shallow composition of our primitives. This both motivates the method and frames our
+honesty about accuracy.
+
+\section{Method}\label{sec:method}
+\input{sec_method}
+
+\section{Theory: Localizing and Closing the Gap}\label{sec:theory}
+\input{sec_theory}
+
+\section{The Frontier Map}\label{sec:frontier}
+\input{sec_frontier}
+
+\section{Generality and a Controlled Check}\label{sec:generality}
+\input{sec_generality}
+
+\section{Experiments on ARC-AGI-2}\label{sec:experiments}
+\input{sec_experiments}
+
+\section{Limitations and Honesty}\label{sec:limitations}
+\input{sec_limitations}
+
+\section{Conclusion}
+ARC progress is usually measured by top-1 accuracy. We have argued for a complementary axis: make failure
+informative. A knowledge-free solver that returns its best partial answer and a typed diagnosis of what it
+lacks---grounded in the formalization that the incompressible residual localizes and closes the gap---turns the
+compositional cliff from a wall into a map. The accuracy we obtain on a single machine is well under one
+percent and we report it without embellishment; the mechanism, the formalization, the controlled generality
+check, and the prioritized roadmap are, we believe, the contribution.
+
+\bibliographystyle{plain}
+\bibliography{refs}
+\end{document}

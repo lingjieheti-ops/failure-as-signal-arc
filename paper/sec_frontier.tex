@@ -1,0 +1,48 @@
+A single-family detector battery names only $3.3\%$ of evaluation tasks (\S\ref{sec:cliff}); $96.7\%$ are
+``unknown.'' Rather than discard that $96.7\%$, we \emph{organize} it. We compute a $20$-dimensional
+structural signature per task from its training pairs---shape relation (area/height/width ratios, same-shape
+fraction), palette change (colors added/removed, background change), input/output symmetry and periodicity,
+object counts, locality (fraction of cells changed), and whether the output is a sub-grid of the input---
+standardize, and cluster ($k$-means). The result (Table~\ref{tab:frontier}) is a \emph{frontier map}: the
+unnameable mass of ARC-AGI-2 resolves into seven interpretable meta-families with a natural priority order
+(cluster size).
+
+\begin{table}[t]\centering
+\caption{Frontier map of the 120-task ARC-AGI-2 evaluation set: seven structural meta-families, ordered by
+size (= build priority). $\sim$56\% of the set is same-shape edits, and periodicity is the single largest
+structural signal.}
+\label{tab:frontier}
+\small
+\begin{tabular}{clr}
+\toprule
+cluster & dominant structure & \% of eval \\
+\midrule
+1 & periodic, same-shape, few cells change (\emph{periodic-texture edits}) & 30.0 \\
+4 & same-shape, low palette (\emph{simple-palette transforms}) & 25.8 \\
+3 & shape-shrinking, fewer colors (\emph{extraction / selection}) & 22.5 \\
+6 & same-shape, many colors (\emph{dense multi-color edits}) & 13.3 \\
+2 & output becomes symmetric, background changes (\emph{symmetrization}) & 5.8 \\
+0 & $\sim$5$\times$ area, symmetric (\emph{tiling / expansion}) & 1.7 \\
+5 & many objects (\emph{many-object}) & 0.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The map is immediately actionable. It says that $\sim$56\% of the evaluation set is same-shape editing and
+that \emph{periodicity is the highest-value capability to build}---a non-obvious prioritization, since the
+strict periodicity detector fires on only one task even though $30\%$ of the set carries periodic structure
+(the periodicity is typically partial, noisy, or occluded). The same structural families are not an artifact
+of the small evaluation set: clustering the $1000$ \emph{training} tasks recovers the same meta-families
+(the four largest of seven: same-shape edits $61\%$, extraction/selection $19\%$, symmetrization $8\%$,
+tiling/expansion $6\%$; the remainder $4.3/0.6/0.5\%$). We also measure stability directly: the partition is highly robust to the choice of
+$k$ (ARI $0.73$--$0.98$ between $k{=}7$ and $k\in\{5,\dots,9\}$ on evaluation; $0.88$--$0.96$ on training) but
+only moderately stable across random seeds (mean pairwise ARI $0.47\pm0.13$ on the $120$ evaluation tasks;
+$0.60\pm0.13$ on the $1000$ training tasks)---i.e.\ the coarse family structure is robust while fine-grained
+assignments shift, which is the honest granularity at which the map should be read. The \emph{causal} test---that building the top-priority capability closes more tasks than a low-priority
+one---already has a first, \emph{adverse} datum, which we report rather than hide: acting on the map's top
+recommendation we built two global soft-periodicity primitives (orbit-mode denoising and fundamental-tile
+extraction); they fired on \emph{zero} additional tasks. The lesson is that the periodic structure in this
+family is reachable only \emph{compositionally} (object-local periodicity, repair-after-selection), which
+sharpens the recommendation from ``periodicity'' to ``compositional periodicity'' and is consistent with the
+counting result of \S\ref{sec:experiments}. We present the map as a falsifiable prioritization hypothesis and
+release the per-task signatures and cluster assignments so others can test it and target families directly.

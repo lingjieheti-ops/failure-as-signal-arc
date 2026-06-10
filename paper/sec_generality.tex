@@ -1,0 +1,71 @@
+If failure-as-signal is a genuine principle rather than an ARC trick, the same framework should run on an
+unrelated domain---and there, with controllable ground truth, we can probe the diagnostic in a way ARC does
+not permit (on ARC we never know the ``true'' missing primitive). We instantiate the framework on
+\textbf{integer-sequence transformations}: tasks are hidden compositions of $12$ generic list primitives
+(reverse, sort-ascending, sort-descending, increment, decrement, double, deduplicate, rotate-left,
+rotate-right, repeat, head, tail), presented as input--output examples and scored by the same two-part MDL
+code of Eq.~\eqref{eq:dl}.
+
+\paragraph{The mechanism transfers (Universality).} Over $400$ tasks, the knowledge-free MDL search recovers
+an exact program for \textbf{92\%} of them ($369/400$). The same compositional search, residual, and
+diagnostic carry over unchanged from grids to sequences---evidence that the \emph{mechanism} is not
+ARC-specific. We are careful about what this shows: the domain and its primitives were authored together, so
+$92\%$ demonstrates that the search reliably finds compositions \emph{within a constructed space}, not a
+general capability on adversarial out-of-distribution tasks.
+
+\paragraph{A controlled check of Theorem~\ref{thm:residual}.} We then ablate: for each primitive $g$ we remove
+it and collect tasks whose true program provably \emph{needs} $g$ (solvable with the full library, unsolvable
+without it). On these $135$ provably-needy tasks we ask two questions. First, does re-adding the diagnosed
+primitive close the gap? It does, for \textbf{100\%} ($135/135$)---but we stress this is a
+\emph{consistency check} of Theorem~\ref{thm:residual}(c) in the realizable regime: re-adding the exact
+primitive the task was built from is \emph{guaranteed} to close it, so the $100\%$ confirms the theorem's
+construction rather than proving anything novel about capability. The substantive, \emph{not}-by-construction
+question is the second: can the cheap residual signature \emph{name} the missing operation? Here the answer is
+an honest \textbf{62\%} category accuracy (Table~\ref{tab:ablation}), with a clean split---structural residuals
+(reverse, repeat, tail, deduplicate) are named at $90$--$100\%$, while value residuals (double, increment) are
+hard because other primitives partially compensate and blur the signature. This is exactly the two-tier
+behaviour the theory anticipates: gap-\emph{closability} is provable and complete; \emph{unique naming} from
+the signature alone is partial and is the open problem we quantify rather than hide.
+
+\paragraph{A second, externally-defined domain: elementary cellular automata.} The sequence domain was
+authored by us; a skeptic may object that the method is guaranteed to win a sandbox built from its own
+primitives. We therefore add a domain whose rule space is \emph{external mathematics}: Wolfram's $256$
+elementary cellular automata. Each task hides one rule applied for a step on width-$15$ periodic binary
+states ($4$ training pairs, $2$ held-out tests); the library is $14$ generic local boolean operations
+(shifts, negation, pairwise AND/OR/XOR of neighbours, majority)---not derived from any rule table. Three
+findings. \textbf{(i) The search discovers the library's true expressive boundary:} it exactly solves
+$43/256$ rules ($17\%$, test-verified)---precisely the affine/shift-like family (e.g.\ rules $90$, $60$,
+$102$, $51$, $85$)---with the chaotic majority left unsolved, as it must be. \textbf{(ii) Graceful
+degradation where the theorem does \emph{not} apply:} on the $213$ \emph{non-realizable} rules, the best
+partial program still achieves $0.837$ mean cell accuracy on held-out states versus $0.495$ for copy-input
+(lift $+0.342$), beating or tying copy on $95\%$ of rules---the strongest evidence in this paper that the
+conservative-MDL policy extracts real partial structure when the library is fundamentally insufficient.
+\textbf{(iii) The residual predicts gap-closability:} among unsolved rules, $15/213$ become exactly solvable
+by adding a \emph{single} held-out primitive; those closable rules have systematically smaller residuals
+($0.074$ vs $0.125$ residual fraction), and residual size ranks closability with $\mathrm{AUC}=0.76$. (A
+na\"ive median-threshold classifier fails---$0.49$ accuracy---because closable rules are rare at a $7\%$ base
+rate; the claim is the rank signal, not a threshold.) This gives empirical content to
+Theorem~\ref{thm:residual} \emph{from the outside}: small incompressible residual is a usable signal that one
+named primitive is missing, even in a rule space we did not design.
+
+\begin{table}[t]\centering
+\caption{Controlled ablation on the sequence domain (full per-primitive breakdown). ``needy'' $=$ tasks that
+provably require the removed primitive. Re-add closure is $100\%$ \emph{by construction} (realizable regime);
+the informative column is ``category named,'' which the cheap residual signature gets right $62\%$ overall.}
+\label{tab:ablation}
+\small
+\begin{tabular}{lccc|lccc}
+\toprule
+removed & needy & named & closed & removed & needy & named & closed \\
+\midrule
+reverse & 10 & 100\% & 100\% & deduplicate & 15 & 93\% & 100\% \\
+repeat & 10 & 100\% & 100\% & rotate-right & 8 & 88\% & 100\% \\
+tail & 14 & 100\% & 100\% & head & 14 & 86\% & 100\% \\
+sort-desc & 6 & 83\% & 100\% & sort-asc & 5 & 40\% & 100\% \\
+decrement & 14 & 36\% & 100\% & increment & 11 & 27\% & 100\% \\
+double & 15 & 13\% & 100\% & rotate-left & 13 & 0\% & 100\% \\
+\midrule
+\multicolumn{8}{c}{\textbf{overall: 135 needy \;|\; category named 62\% (84/135) \;|\; gap closed 100\% (135/135)}}\\
+\bottomrule
+\end{tabular}
+\end{table}

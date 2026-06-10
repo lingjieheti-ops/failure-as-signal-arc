@@ -1,0 +1,22 @@
+# data: clone per README (github.com/arcprize/ARC-AGI-2)
+data/ARC-AGI-2/
+# model checkpoints (>100MB; negative-result artifacts, available on request)
+*.pt
+# latex build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+# python
+__pycache__/
+*.pyc
+# scratch
+paper/figs/_check*.png
+experiments/_challenges_test.json
+experiments/_sub_test.json
+# unrelated project (separate competition)
+rogii_wellbore/

@@ -1,0 +1,60 @@
+Our submitted solver is purely symbolic and knowledge-free; we describe it first, then the diagnostic layer,
+then a transformer fallback we \emph{explored} but did not submit (\S\ref{sec:limitations}).
+
+\paragraph{Knowledge-free primitive library.} The hypothesis space is a small library of $27$
+\emph{generic}, domain-agnostic operations: the eight dihedral symmetries; crop-to-content; connected-component
+selection (largest/smallest, keep/remove); cardinality-based object selection (unique/modal shape, unique
+color---added by the loop's second iteration, \S\ref{sec:experiments}); mirror tilings; an
+axis-/period-/rotation-searching \emph{symmetry-repair} operator that inpaints occluded cells by the symmetry
+group of the visible cells; and soft-periodicity (orbit-mode reconstruction). Crucially these are \emph{not} ARC-tuned task solutions; they
+are the kind of operators one would define for any grid domain, so the library is an inductive bias, not ARC
+\emph{knowledge}---analogous to CompressARC's equivariant architecture~\cite{liao2025compressarc} but
+\emph{compositional}.
+
+\paragraph{Anytime MDL compositional search (C1).} For each task we beam-search compositions of primitives,
+scoring each by Eq.~\eqref{eq:dl}; programs that act identically on the training inputs are merged by the
+canonical signature of their predictions. The search is \emph{anytime}---it keeps the lowest-DL program found
+under a per-task time budget---so it degrades gracefully under compute and runs the 120-task evaluation set in
+$\sim$4 minutes on CPU, far inside the Kaggle 12-hour offline budget.
+
+\paragraph{Graceful degradation (C2).} Exact solutions are rare on ARC-AGI-2; the interesting question is what
+to emit when none is found. A na\"ive ``lowest-DL program'' over-transforms: its mean cell-accuracy ($0.566$)
+is slightly \emph{below} copying the input ($0.572$). We therefore adopt a \emph{conservative anytime policy}:
+deviate from copy-input only when a program strictly beats copying on the \emph{training} pairs (a decision
+that never inspects the test output). To measure what failure carries, we use a partial-credit score:
+\begin{definition}[Partial-credit]\label{def:partial}
+For prediction $\hat y$ and target $y$ with $N$ cells, $\mathrm{pc}(\hat y,y)=\mathbf 1[\,\mathrm{shape}(\hat
+y)=\mathrm{shape}(y)\,]\cdot \tfrac1N\sum_j \mathbf 1[\hat y_j=y_j]$ (zero on shape mismatch, else cell
+accuracy). We report its mean alongside the shape-commit rate and the cell accuracy \emph{conditioned} on
+correct shape.
+\end{definition}
+\noindent Under this policy the solver never does worse than ``leave the grid alone'' \emph{on the training
+pairs, by construction}; on held-out evaluation outputs it empirically matches-or-beats copy-input $97.6\%$ of
+the time (\S\ref{sec:experiments})---graceful, though not a test-side guarantee.
+
+\paragraph{Diagnostic routing and the gap-closure loop (C3).} For every task we compute the residual
+diagnostic of \S\ref{sec:theory}: the support and structural signature of what the best program leaves
+unexplained. Aggregated over the \emph{training} set these form a taxonomy of missing capabilities; where the
+named family has a single directly-realizing primitive, adding it closes $75$--$100\%$ of those tasks
+(panel-logic, which needs composition, closes $33\%$). The loop then \emph{acts on its own diagnosis}: the
+largest unclosed family it flagged---object counting---became the capability we built next, closing part of
+that family and lifting the loop's union from $17$ to $20/1000$ while revealing that the rest of the family
+requires \emph{compositional} counting (\S\ref{sec:experiments}): the system points at its own next
+capability, and its partial failures say why. A single real instance makes the loop concrete---and we disclose its provenance fully, since it involves an
+evaluation task. On \texttt{0934a4d8} the visible grid is symmetric under an \emph{off-center} vertical mirror
+but occluded by a solid colored rectangle; a na\"ive global-symmetry primitive fails, and its residual is
+itself a near-perfect off-center mirror---exactly the signature naming the missing \emph{axis-searching}
+symmetry-repair operator. Adding that operator makes this task's \emph{training pairs} exactly reproducible
+(its held-out test instance still fails---the test grid's symmetry differs---so the loop closed the training
+pairs and the new residual points at the next refinement), and the generalized operator exactly solves one
+\emph{other} evaluation task. Because this operator was generalized after inspecting an evaluation task, the
+entry's $0.83\%$ is not a clean-room number: the frozen, pre-inspection library scores $0/120$
+(\S\ref{sec:experiments}).
+
+\paragraph{Transformer fallback (explored, not submitted).} For completeness we also trained a tiny
+($\sim$40M-parameter) decoder-only transformer from scratch on ARC-AGI-2 training tasks under knowledge-free
+augmentation (dihedral $\times$ color-permutation $\times$ leave-one-out), with augmentation-vote decoding. It
+is \emph{not} knowledge-free (it trains on ARC) and, despite reaching $0.916$ token accuracy, produced zero
+exact matches in or out of distribution; we exclude it from the submitted entry and report it as a quantified
+negative result (\S\ref{sec:limitations}). The hybrid routing it was intended for---symbolic-exact-first,
+neural-fallback---remains a natural design once a fallback clears the symbolic baseline.

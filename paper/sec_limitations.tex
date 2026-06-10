@@ -1,0 +1,37 @@
+We state limitations directly, because an honest account of what does \emph{not} work is part of the
+contribution.
+
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+  \item \textbf{Accuracy is very low.} The submitted knowledge-free symbolic entry solves $1$ of $120$
+  evaluation tasks ($0.83\%$). We do not claim, and the reader should not infer, competitiveness with
+  compute-intensive leaderboard entries. Our argument is explicitly that the paper-track value lies elsewhere.
+  \item \textbf{The transformer we explored is a negative result---with an instructive explanation.} We
+  trained a tiny ($\sim$40M) decoder-only transformer from scratch on ARC-AGI-2 under heavy knowledge-free
+  augmentation. After $\sim$24{,}000 steps it reached $0.916$ token accuracy yet produced \emph{zero} exact
+  matches---on the full evaluation set ($0/120$) \emph{and} in-distribution on training tasks ($0/60$). The
+  arithmetic explains why: with independent per-cell errors, the probability of an exactly-correct $N$-cell
+  grid is $\approx 0.916^{N}$, i.e.\ $\sim 0.02\%$ at $N{=}100$---so the observed zero is the theoretical
+  expectation, not noise. Exact-grid match demands near-perfect ($\gtrsim 0.97$) token accuracy, which our
+  decelerating curve would not reach at this scale. This quantifies, on one consumer GPU, why autoregressive
+  cell prediction is the wrong shape for exact-match reasoning without much stronger inductive bias or
+  iterative refinement (cf.\ TRM~\cite{jolicoeur2025trm}). The model is also not knowledge-free (it trains on
+  ARC), so we exclude it from the entry and report it transparently. A serialized-grid context limit (large
+  evaluation grids exceed the window) was an additional obstacle.
+  \item \textbf{Diagnostic identifiability.} The cheap residual-signature classifier names the correct
+  \emph{category} of the missing primitive only $62\%$ of the time on the controlled domain; uniquely naming
+  the primitive from the signature alone is unsolved. Theorem~\ref{thm:residual} guarantees gap-closability,
+  not cheap unique identification.
+  \item \textbf{Taxonomy coverage.} Single-family detectors name only $\sim$5\% of ARC-AGI-2 tasks; the
+  frontier map organizes the remaining majority into actionable families but does not solve them.
+  \item \textbf{The frontier map is descriptive; stability is measured, causality is not.} It is a $k$-means
+  clustering over $20$ hand-chosen features. We measure robustness (high across $k$, ARI $0.73$--$0.98$;
+  moderate across seeds, mean pairwise ARI $0.47$ on evaluation and $0.60$ on training), so only the coarse
+  family structure should be trusted; and we do not yet provide the causal test that building the top-priority capability closes more
+  tasks than a low-priority one. We present it as a prioritization hypothesis and release the per-task
+  signatures so others can test it.
+  \item \textbf{Generality is shown on two domains, one authored.} The sequence domain's primitives are ours
+  (its $100\%$ ablation closure is a realizable-regime consistency check); the cellular-automaton domain is
+  externally defined but small-alphabet and one-step. Broader externally-sourced domains (strings, graphs,
+  OEIS rules) remain to be tested, and the residual$\to$closability signal ($\mathrm{AUC}=0.76$) is a rank
+  signal at a $7\%$ base rate, not an operating classifier.
+\end{itemize}
