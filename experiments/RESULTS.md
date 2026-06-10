@@ -292,6 +292,19 @@ but leave eval untouched: cleanest evidence yet that the cliff is compositional 
 not primitive breadth. Reported in paper as deliberate adverse result (sec_experiments iteration-3 paragraph;
 fig caption iters 2-3, 4/31). Entry = MDL + graceful + factories, 4.3 min/set.
 
+## E21 — SUBMITTED (both tracks) — 2026-06-10
+1. GitHub open-source (required): https://github.com/lingjieheti-ops/failure-as-signal-arc (public, 2 commits).
+2. ARC-AGI-2 code submission: dataset yuanyezhiyin2/failure-as-signal-code + notebook
+   yuanyezhiyin2/failure-as-signal-entry v3 (offline, CPU; ran 240 hidden-format tasks in 514s on Kaggle).
+   Rules accepted via Chrome (user-authorized). Submission #53527106 status COMPLETE, publicScore 0.00
+   (hidden semi-private set; expected — our 1 public-eval solve is not in it; rules: score doesn't gate).
+   Kernel pitfalls fixed en route: GBK encoding (ASCII-ify), --dir-mode zip => code.zip (unzip in notebook),
+   2026 nested mounts /kaggle/input/{competitions,datasets}/... (recursive glob).
+3. Paper Track writeup: SUBMITTED ("Failure as Signal: Knowledge-Free Compositional Reasoning for ARC-AGI",
+   by Si Fan; 6/6 checklist; card image injected via in-page canvas->File->DataTransfer; description 512
+   words; GitHub project link; PDF + repo + notebook links in body). Editable until Nov 10, 2026 7:59 AM GMT+8.
+Author name set to Si Fan in paper/main.tex (12pp, 0/0/0).
+
 ## E20 — ITERATION 4: object-property-map family + clean eval shot #2 — 2026-06-10
 `code/objects.py` rf_object_map: learns per-task map from generic object property (size / size_rank /
 canonical-D4-shape / border-contact / hole-count / color) -> action (recolor c / DEL), over conn {8,4} x

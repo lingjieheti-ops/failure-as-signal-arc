@@ -1,13 +1,25 @@
-[{"stream_name":"stdout","time":0.920222126,"data":"inputs: ['/kaggle/input/competitions', '/kaggle/input/datasets', '/kaggle/input/competitions/arc-prize-2026-arc-agi-2', '/kaggle/input/datasets/yuanyezhiyin2']\n"}
-,{"stream_name":"stderr","time":0.922798007,"data":"Traceback (most recent call last):\n"}
-,{"stream_name":"stderr","time":0.922868275,"data":"  File \"/kaggle/src/script.py\", line 22, in \u003cmodule\u003e\n"}
-,{"stream_name":"stderr","time":0.922878133,"data":"    assert code_dir, \"code directory not found in attached dataset\"\n"}
-,{"stream_name":"stderr","time":0.922884185,"data":"           ^^^^^^^^\n"}
-,{"stream_name":"stderr","time":0.922967216,"data":"AssertionError: code directory not found in attached dataset\n"}
-,{"stream_name":"stderr","time":4.093029443,"data":"/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
-,{"stream_name":"stderr","time":4.093064486,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
-,{"stream_name":"stderr","time":4.524699939,"data":"/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
-,{"stream_name":"stderr","time":4.524747954,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
-,{"stream_name":"stderr","time":6.236833249,"data":"[NbConvertApp] Converting notebook __script__.ipynb to html\n"}
-,{"stream_name":"stderr","time":7.936425714,"data":"[NbConvertApp] Writing 279117 bytes to __results__.html\n"}
+[{"stream_name":"stdout","time":0.887885282,"data":"code_dir: /kaggle/input/datasets/yuanyezhiyin2/failure-as-signal-code/code\n"}
+,{"stream_name":"stdout","time":516.168433824,"data":"challenges=/kaggle/input/competitions/arc-prize-2026-arc-agi-2/arc-agi_test_challenges.json -\u003e /kaggle/working/submission.json\n"}
+,{"stream_name":"stdout","time":516.168483635,"data":"  20/240 (2.21s/task)\n"}
+,{"stream_name":"stdout","time":516.168491724,"data":"  40/240 (2.15s/task)\n"}
+,{"stream_name":"stdout","time":516.168497967,"data":"  60/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168504015,"data":"  80/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168509877,"data":"  100/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168524989,"data":"  120/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168531461,"data":"  140/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168543862,"data":"  160/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168549931,"data":"  180/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168555982,"data":"  200/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168562486,"data":"  220/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168568525,"data":"  240/240 (2.14s/task)\n"}
+,{"stream_name":"stdout","time":516.168574807,"data":"wrote /kaggle/working/submission.json (240 tasks, 514s)\n"}
+,{"stream_name":"stdout","time":516.168581174,"data":"\n"}
+,{"stream_name":"stdout","time":516.168587442,"data":"\n"}
+,{"stream_name":"stdout","time":516.168594421,"data":"OK: /kaggle/working/submission.json ready\n"}
+,{"stream_name":"stderr","time":519.215354479,"data":"/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":519.215432895,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":519.634208601,"data":"/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":519.634243085,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":521.452740677,"data":"[NbConvertApp] Converting notebook __script__.ipynb to html\n"}
+,{"stream_name":"stderr","time":523.255741453,"data":"[NbConvertApp] Writing 278383 bytes to __results__.html\n"}
 ]
